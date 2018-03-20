@@ -111,12 +111,11 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
 	int lenPB = *lenPB_, dim = *dim_, n = *n_, lenCVH = *lenCVH_, verbose = *verbose_, maxIter = *maxIter_;
 	double intEps = *intEps_, lambdaSqEps = *lambdaSqEps_, cutoff = *cutoff_, gamma = *gamma_;
 
-	//omp_set_num_threads(omp_get_max_threads());
+#ifdef _OPENMP
 	if (verbose > 1) {
 		Rprintf("Using %d threads\n",omp_get_max_threads());
 	}
-	//omp_set_num_threads(2);
-	//Rprintf("%d, %d\n",omp_get_num_procs(), omp_get_max_threads());
+#endif
 
 	int i;
 	double timeA = cpuSecond();
@@ -153,9 +152,14 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
     	XToBox[i] = list[i].XToBox;
         //B[list[i].id] = i;
     }
-
-	float *boxEvalPointsFloat = malloc(numBoxes*dim*3*sizeof(float));
-	for (i=0; i < numBoxes*dim*3; i++) { boxEvalPointsFloat[i] = (float) boxEvalPoints[i]; }
+	
+#ifdef __AVX__
+	int nB = ((int) (numBoxes/8) + 1)*8;
+#else
+    int nB = numBoxes;
+#endif
+	float *boxEvalPointsFloat = malloc(nB*dim*3*sizeof(float));
+	for (i=0; i < nB*dim*3; i++) { boxEvalPointsFloat[i] = (float) boxEvalPoints[i]; }
 	// only the first entry in each dimension is required
 	float *gridFloat = malloc(dim*sizeof(float));
 	double *gridDouble = malloc(dim*sizeof(double));
@@ -242,6 +246,7 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
 	copyVector(newtonStep,grad,nH*(dim+1),1);
 	// LBFGS params
 	int m = (int)(nH/5) < 40 ? (int) nH/5 : 40;
+	m = m < 1 ? 1 : m;
 	double *s_k = calloc(*lenP*m,sizeof(double));
 	double *y_k = calloc(*lenP*m,sizeof(double));
 	double *sy = calloc(m,sizeof(double));
@@ -333,8 +338,8 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
 		// switch to sparse approximative mode
 		if (iter >= 25 && ((double) nHHist[iter-25] - nHHist[iter])/(double) nHHist[iter] < 0.05 && mode == 0 && nH > 500 && gamma >= 100) {
 			mode = 1;
-			if (verbose > 2) {
-				Rprintf("Switch to fast mode\n");
+			if (verbose > 1) {
+				Rprintf("Switch to approximative mode\n");
 			}
 			updateList = updateListInterval;
 			
@@ -464,7 +469,7 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
 		double timeB = cpuSecond()-timer;
 		if (verbose > 1 && (iter < 10 || iter % 10 == 0)) {
 			//Rprintf("%d: %.5f (%.4f, %.5f, %d) \t (lambdaSq: %.4e, t: %.0e, Step: %.4e) \t (Nodes per ms: %.2e)  %d \n",iter,funcValStep,-*TermA*n,*TermB,nH,lambdaSq,step,lastStep,(lenY+n)/1000/timeB*nH, updateListInterval);
-			Rprintf("%d: Objective: %.4f, Step: %.2e (Log-Like: %.2f, Integral: %.5f, # hyperplanes: %d) \t Nodes per ms: %.2e \n",iter,funcValStep,lastStep,-*TermA*n,*TermB,nH,(lenY+n)/1000/timeB*nH);
+			Rprintf("%d: Objective: %.4f, Step: %.2e \t (Log-Like: %.2f, Integral: %.5f, # hyperplanes: %d) \t Nodes per ms: %.2e \n",iter,funcValStep,lastStep,-*TermA*n,*TermB,nH,(lenY+n)/1000/timeB*nH);
 		}
 	}
 	double timeB = cpuSecond();
@@ -475,5 +480,11 @@ void newtonBFGSLC(double *X_,  double *XW_, double *box, double *params_, double
 
 	free(delta); free(deltaD); free(XF); free(XWF); free(params); free(boxEvalPointsFloat); free(gridFloat); free(gridDouble); free(a); free(b); free(aTrans); free(influence);
 	free(grad); free(gradOld); free(gradA); free(gradB); free(newtonStep); free(paramsNew); free(nHHist); free(activePlanes); free(inactivePlanes); free(gradCheck);
-	free(numEntries); free(numEntriesCumSum); free(idxEntries); free(maxElement); free(s_k); free(y_k); free(sy); free(syInv);
+	// free variales for preconditioner
+	free(numEntries); free(numEntriesCumSum); free(idxEntries); free(maxElement); free(elementList); free(elementListSize);
+	// free variables for BFGS optimization
+	free(s_k); free(y_k); free(sy); free(syInv);
+	// free grid variables
+    free(numPointsPerBox); free(YIdx); free(XToBox); free(boxEvalPoints); free(grid);
+	free(X); free(XW); free(TermA); free(TermB);
 }

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <headers.h>
 #include <limits.h>
-#include <R.h>
 
 void getMN(int dim, int sparse, int* N, int* M) {
 	if (sparse) {
@@ -141,6 +140,7 @@ void makeGridND(double *box, int N, int dim, double* sparseGrid) {
 			}
 		}
 	}
+	free(grid);
 }
 
 void setGridDensity(double *box, int dim, int sparseGrid, int *N, int *M, double **grid, double* weight) {
@@ -213,6 +213,11 @@ void makeGridC(double *X, unsigned short int **YIdx, unsigned short int **XToBox
 		(*XToBox)[i] = USHRT_MAX;
 	}
 	
+#ifdef __AVX__
+	int nB = ((int) (*numBoxes/8) + 1)*8;
+#else
+	int nB = *numBoxes;
+#endif
     *numPointsPerBox = calloc(*numBoxes+1,sizeof(int));
 	*boxEvalPoints = calloc(*numBoxes*3*dim,sizeof(double)); 
 
@@ -377,8 +382,13 @@ void makeGridC(double *X, unsigned short int **YIdx, unsigned short int **XToBox
     }
 	// resize arrays to the final number of grid points/boxes
     if (counterNumBoxes != *numBoxes) {
-        *numPointsPerBox = realloc(*numPointsPerBox,(counterNumBoxes+1)*sizeof(int));
-		*boxEvalPoints = realloc(*boxEvalPoints,counterNumBoxes*dim*3*sizeof(double)); 
+#ifdef __AVX__
+		nB = ((int) (counterNumBoxes/8) + 1)*8;
+#else
+		nB = counterNumBoxes;
+#endif
+        *numPointsPerBox = realloc(*numPointsPerBox,(nB+1)*sizeof(int));
+		*boxEvalPoints = realloc(*boxEvalPoints,nB*dim*3*sizeof(double)); 
     }
     *numBoxes = counterNumBoxes;
 
@@ -394,4 +404,6 @@ void makeGridC(double *X, unsigned short int **YIdx, unsigned short int **XToBox
 	free(sparseGrid);
 	free(subGrid); free(subGridIdx);
 	free(boxMax); free(boxMin); free(boxMaxOuter); free(boxMinOuter);
+	free(XToBoxOuter);
+	free(sparseDelta);
 }

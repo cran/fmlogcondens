@@ -47,8 +47,6 @@ void calcGradFloatAVXCaller(float *X, float* XW, float *grid, double* a, double*
 
 void newtonBFGSLInitC(double* X,  double* XW, double* box, double* params, int *dim_, int *lenP_, int *n_, double* ACVH, double* bCVH, int *lenCVH_, double *intEps_, double *lambdaSqEps_, double* logLike) {
 
-	omp_set_num_threads(omp_get_max_threads());	
-		
 	// cast R pointers
 	int dim = *dim_, lenP = *lenP_, n = *n_, lenCVH = *lenCVH_;
    	double intEps = *intEps_, lambdaSqEps = *lambdaSqEps_;	
@@ -170,4 +168,6 @@ void newtonBFGSLInitC(double* X,  double* XW, double* box, double* params, int *
 	logLike[0] = funcValStep;
 	free(gradA); free(gradB); free(TermA); free(TermB); free(a); free(b); free(delta); free(gridFloat); free(s_k); free(y_k); free(sy); free(syInv);
 	free(grad); free(gradOld); free(newtonStep); free(paramsNew); free(XF); free(XWF);
+    // free grid variables
+    free(numPointsPerBox); free(YIdx); free(XToBox); free(boxEvalPoints); free(grid);
 }

@@ -1,5 +1,5 @@
 ---
-title: "Usage of the package fmlogcondens"
+title: "Usage of fmlogcondens"
 author: "Fabian Rathke (frathke at gmail.com)"
 date: "`r Sys.Date()`"
 bibliography: papers.bib
@@ -80,7 +80,7 @@ Then in your favorite text editor open the file `~/.R/Makevars` (create it if it
 ```
 CFLAGS += -march=native
 ```
-This activates processor specific optimizations for the compilation of C code. [NOTE: This flag will affect all future installations that are manually compiled from source. In general it is a good idea to keep this flag after installing this pacakge, since it may potentially lead to faster code for other packages too.]
+This activates processor specific optimizations for the compilation of C code. [NOTE: This flag will affect all future installations that are manually compiled from source. In general it is a good idea to keep this flag after installing this pacakge, since it may potentially lead to faster code for other future packages too.]
 
 Finally, from within R, we run the command:
 
@@ -94,6 +94,10 @@ R CMD INSTALL path-to-package/fmlogcondens_1.0.0.tar.gz
 ```
 You can check whether AVX was activated for the installation by calling the function `compilationInfo()` in R after loading the package. The desired output would be `
 AVX vector extensions activated.`. 
+
+### A note on OpenMP and MacOS
+
+OpenMP (Open Multi-Processing) is a API for C that supports multi-threaded programming. `fmlogcondens` automatically supports OpenMP. Problems can arise for MacOS when compiling from source, since the `clang` compiler may not support OpenMP. In that case you can try to follow this [tutorial](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/) for a guide how to setup OpenMP under MacOS.
 
 ## Usage
 
