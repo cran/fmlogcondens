@@ -1,7 +1,7 @@
 Package: fmlogcondens
 Type: Package
 Title: Fast Multivariate Log-Concave Density Estimation
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(person("Fabian", "Rathke", role=c("aut", "cre"),
                     email = "frathke@gmail.com"),
              person("Christoph", "Schnörr", role="aut"),
@@ -26,10 +26,10 @@ Suggests: LogConcDEAD, knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2018-03-20 10:52:51 UTC; fabian
+Packaged: 2018-03-23 10:48:53 UTC; fabian
 Author: Fabian Rathke [aut, cre],
   Christoph Schnörr [aut],
   Giovanni Garberoglio [cph]
 Maintainer: Fabian Rathke <frathke@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-03-20 11:37:18 UTC
+Date/Publication: 2018-03-23 14:33:49 UTC
